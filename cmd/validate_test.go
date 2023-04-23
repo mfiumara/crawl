@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func validate_test(t *testing.T) {
+func validateTest(t *testing.T) {
 
 	err := validate("testdata/petstore.json")
 

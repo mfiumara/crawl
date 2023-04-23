@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +20,7 @@ var validateCmd = &cobra.Command{
 	Short: "Validate an openAPI spec definition",
 	Long:  `Validates whether an openAPI specification is valid or not. Can give a URL or a local file path as input.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		validate(path)
+		Validate(path)
 	},
 }
 
@@ -38,7 +39,7 @@ func init() {
 }
 
 // Validates an openapi spec
-func validate(path string) error {
+func Validate(path string) error {
 	ctx := context.Background()
 	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
 	doc, err := loader.LoadFromFile(path)
