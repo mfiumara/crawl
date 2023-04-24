@@ -51,8 +51,19 @@ func ListMethods(path string) error {
 		return err
 	}
 
+	// Set the printing format
+	opLen := 0
+	for key, _ := range doc.Paths {
+		if len(key) > opLen {
+			opLen = len(key)
+		}
+	}
+	format := fmt.Sprintf("%%-%ds %%-%ds | %%s\n", 7, opLen)
+
 	for key, value := range doc.Paths {
-		fmt.Printf("%v, %v\n", key, value)
+		for method, operation := range value.Operations() {
+			fmt.Printf(format, method, key, operation.Summary)
+		}
 	}
 	return nil
 }
