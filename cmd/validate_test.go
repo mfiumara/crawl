@@ -1,11 +1,12 @@
 package cmd
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func validateTest(t *testing.T) {
+func TestValidate(t *testing.T) {
 
 	err := Validate("testdata/petstore.json")
 
