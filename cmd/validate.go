@@ -39,14 +39,14 @@ func init() {
 }
 
 // Validates an openapi spec
-func Validate(path string) error {
+func Validate(path string) (*openapi3.T, error) {
 	ctx := context.Background()
 	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
 	doc, err := loader.LoadFromFile(path)
 	if err != nil {
 		println("Could not load spec from path: ", path)
 		println(err.Error())
-		return err
+		return nil, err
 	}
 
 	// Validate document
@@ -54,9 +54,9 @@ func Validate(path string) error {
 	if err != nil {
 		println("❌ Spec invalid: ")
 		println(err.Error())
-		return err
+		return nil, err
 	}
 
 	println("✅ Spec valid")
-	return nil
+	return doc, nil
 }
