@@ -86,7 +86,7 @@ func getOptionsAndPaths(doc openapi3.T) ([]string, map[string]Path) {
 func promptPath(doc openapi3.T) (error, Path) {
 	var input string
 
-	options, ops := getOptionsAndPaths(doc)
+	options, paths := getOptionsAndPaths(doc)
 	methodPrompt := &survey.Select{
 		Message: "Select method to call",
 		Options: options,
@@ -96,10 +96,10 @@ func promptPath(doc openapi3.T) (error, Path) {
 		return err, Path{}
 	}
 
-	return nil, ops[input]
+	return nil, paths[input]
 }
 
-func promptServer(doc openapi3.T) (error, openapi3.Server) {
+func getOptionsAndServers(doc openapi3.T) ([]string, map[string]openapi3.Server) {
 	// Set the printing format
 	opLen := 0
 	for _, value := range doc.Servers {
@@ -109,23 +109,28 @@ func promptServer(doc openapi3.T) (error, openapi3.Server) {
 	}
 	format := fmt.Sprintf("%%-%ds | %%s", opLen)
 
-	var servers []string
+	var options []string
 	serverMap := make(map[string]openapi3.Server)
 	for _, value := range doc.Servers {
 		choice := fmt.Sprintf(format, value.Description, value.URL)
-		servers = append(servers, choice)
+		options = append(options, choice)
 		serverMap[choice] = *value
 	}
+	return options, serverMap
+}
+
+func promptServer(doc openapi3.T) (error, openapi3.Server) {
+	options, servers := getOptionsAndServers(doc)
 	serverPrompt := &survey.Select{
 		Message: "Select which server to use",
-		Options: servers,
+		Options: options,
 	}
-	var server string
-	err := survey.AskOne(serverPrompt, &server, survey.WithValidator(survey.Required))
+	var input string
+	err := survey.AskOne(serverPrompt, &input, survey.WithValidator(survey.Required))
 	if err != nil {
 		return err, openapi3.Server{}
 	}
-	return nil, serverMap[server]
+	return nil, servers[input]
 }
 
 func init() {
