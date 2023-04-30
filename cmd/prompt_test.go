@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 )
 
@@ -58,4 +59,48 @@ func TestGetOptionsAndPaths(t *testing.T) {
 
 	assert.Equal(t, expectedOptions, options)
 	assert.Equal(t, expectedPathMap, pathMap)
+}
+
+func TestPromptServer(t *testing.T) {
+	doc, err := Validate("testdata/petstore.json")
+	assert.NoError(t, err)
+
+	// Hack stdin to use prompt_server.txt as input
+	input, err := os.Open("testdata/prompt_server.txt")
+	assert.NoError(t, err)
+	oldStdin := os.Stdin
+	defer func() {
+		os.Stdin = oldStdin
+		err := input.Close()
+		if err != nil {
+			return
+		}
+	}()
+	os.Stdin = input
+
+	err, server := promptServer(*doc)
+	assert.NoError(t, err)
+	assert.Equal(t, server.URL, "https://petstore.swagger.io/v2")
+}
+
+func TestPromptPath(t *testing.T) {
+	doc, err := Validate("testdata/petstore.json")
+	assert.NoError(t, err)
+
+	// Hack stdin to use prompt_server.txt as input
+	input, err := os.Open("testdata/prompt_path.txt")
+	assert.NoError(t, err)
+	oldStdin := os.Stdin
+	defer func() {
+		os.Stdin = oldStdin
+		err := input.Close()
+		if err != nil {
+			return
+		}
+	}()
+	os.Stdin = input
+
+	err, path := promptPath(*doc)
+	assert.NoError(t, err)
+	assert.Equal(t, path.path, "/pets/")
 }

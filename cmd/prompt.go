@@ -126,7 +126,11 @@ func promptServer(doc openapi3.T) (error, openapi3.Server) {
 		Options: options,
 	}
 	var input string
-	err := survey.AskOne(serverPrompt, &input, survey.WithValidator(survey.Required))
+	err := survey.AskOne(
+		serverPrompt,
+		&input,
+		survey.WithValidator(survey.Required),
+	)
 	if err != nil {
 		return err, openapi3.Server{}
 	}
