@@ -24,7 +24,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := Prompt()
+		err := Prompt(doc)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -36,7 +36,7 @@ type Path struct {
 	item openapi3.PathItem
 }
 
-func Prompt() error {
+func Prompt(doc openapi3.T) error {
 
 	// Set the printing format
 	opLen := 0
@@ -67,7 +67,7 @@ func Prompt() error {
 	baseUrl := svrs[server].URL
 	// Set the printing format
 	opLen = 0
-	for key, _ := range doc.Paths {
+	for key := range doc.Paths {
 		if len(key) > opLen {
 			opLen = len(key)
 		}
@@ -94,19 +94,21 @@ func Prompt() error {
 	var answer string
 	err = survey.AskOne(methodPrompt, &answer, survey.WithValidator(survey.Required))
 	if err != nil {
-		println(err.Error())
 		return err
 	}
 	resp, err := http.Get(baseUrl + ops[answer].path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		return err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	fmt.Println(string(body))
 	return nil
