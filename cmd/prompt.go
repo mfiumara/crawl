@@ -1,6 +1,3 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -36,8 +33,7 @@ type Path struct {
 	item openapi3.PathItem
 }
 
-func Prompt(doc openapi3.T) error {
-
+func PromptServer(doc openapi3.T) (error, openapi3.Server) {
 	// Set the printing format
 	opLen := 0
 	for _, value := range doc.Servers {
@@ -48,11 +44,11 @@ func Prompt(doc openapi3.T) error {
 	format := fmt.Sprintf("%%-%ds | %%s", opLen)
 
 	var servers []string
-	svrs := make(map[string]openapi3.Server)
+	serverMap := make(map[string]openapi3.Server)
 	for _, value := range doc.Servers {
 		choice := fmt.Sprintf(format, value.Description, value.URL)
 		servers = append(servers, choice)
-		svrs[choice] = *value
+		serverMap[choice] = *value
 	}
 	serverPrompt := &survey.Select{
 		Message: "Select which server to use",
@@ -61,18 +57,20 @@ func Prompt(doc openapi3.T) error {
 	var server string
 	err := survey.AskOne(serverPrompt, &server, survey.WithValidator(survey.Required))
 	if err != nil {
-		println(err.Error())
-		return err
+		return err, openapi3.Server{}
 	}
-	baseUrl := svrs[server].URL
+	return nil, serverMap[server]
+}
+
+func PromptPath(doc openapi3.T) (error, Path) {
 	// Set the printing format
-	opLen = 0
+	opLen := 0
 	for key := range doc.Paths {
 		if len(key) > opLen {
 			opLen = len(key)
 		}
 	}
-	format = fmt.Sprintf("%%-%ds %%-%ds | %%s", 7, opLen)
+	format := fmt.Sprintf("%%-%ds %%-%ds | %%s", 7, opLen)
 
 	var options []string
 	ops := make(map[string]Path)
@@ -92,11 +90,25 @@ func Prompt(doc openapi3.T) error {
 		Options: options,
 	}
 	var answer string
-	err = survey.AskOne(methodPrompt, &answer, survey.WithValidator(survey.Required))
+	err := survey.AskOne(methodPrompt, &answer, survey.WithValidator(survey.Required))
+	if err != nil {
+		return err, Path{}
+	}
+	return nil, ops[answer]
+}
+
+func Prompt(doc openapi3.T) error {
+	err, server := PromptServer(doc)
 	if err != nil {
 		return err
 	}
-	resp, err := http.Get(baseUrl + ops[answer].path)
+
+	err, path := PromptPath(doc)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.Get(server.URL + path.path)
 	if err != nil {
 		return err
 	}
@@ -116,14 +128,4 @@ func Prompt(doc openapi3.T) error {
 
 func init() {
 	rootCmd.AddCommand(promptCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// promptCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// promptCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
