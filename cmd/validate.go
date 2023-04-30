@@ -15,7 +15,7 @@ import (
 var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate an openAPI spec definition",
-	Long:  `Validates whether an openAPI specification is valid or not. Can give a URL or a local file path as input.`,
+	Long:  `Validates whether the openAPI specification is valid or not.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		_, err := Validate(path)
 		if err != nil {

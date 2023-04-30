@@ -1,6 +1,3 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -20,37 +17,38 @@ var (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "crawl",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "A tool for interacting with openAPI specifications.",
+	Long: `Crawl is a CLI for interacting with openAPI specifications. It can validate, crawl through
+and perform requests based on a given openAPI specification.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		specPrompt := &survey.Input{
-			Message: "Point to a filepath of an openAPI spec:",
-			Suggest: func(toComplete string) []string {
-				files, _ := filepath.Glob(toComplete + "*")
-				return files
-			},
-		}
+Running the CLI in interactive mode will always first validate the spec, then proceed as an interactive prompt.
+`,
+	PersistentPreRun: rootPreRun,
+}
 
-		var err error
-		// Use the cli path variable if provided
-		if path == "" {
-			err = survey.AskOne(specPrompt, &path)
-			if err != nil {
-				println(err.Error())
-				os.Exit(1)
-			}
-		}
-		d, err := Validate(path)
+func rootPreRun(*cobra.Command, []string) {
+	specPrompt := &survey.Input{
+		Message: "Point to a filepath of an openAPI spec:",
+		Suggest: func(toComplete string) []string {
+			files, _ := filepath.Glob(toComplete + "*")
+			return files
+		},
+	}
+
+	var err error
+	// Use the cli path variable if provided
+	if path == "" {
+		err = survey.AskOne(specPrompt, &path)
 		if err != nil {
+			println(err.Error())
 			os.Exit(1)
 		}
-		doc = *d
-	},
+	}
+	d, err := Validate(path)
+	if err != nil {
+		os.Exit(1)
+	}
+	doc = *d
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -66,5 +64,5 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	// Available for all subcommands
-	rootCmd.PersistentFlags().StringVar(&path, "path", "", "Path to the spec")
+	rootCmd.PersistentFlags().StringVar(&path, "path", "", "Path to an openAPI specification")
 }

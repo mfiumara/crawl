@@ -13,13 +13,9 @@ import (
 // promptCmd represents the prompt command
 var promptCmd = &cobra.Command{
 	Use:   "prompt",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Open an API spec and perform a single request",
+	Long: `Opens an API spec provided and goes through it to list servers and paths.
+Prompts the user to choose a server and path and performs the request`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := Prompt(doc)
 		if err != nil {
@@ -33,7 +29,77 @@ type Path struct {
 	item openapi3.PathItem
 }
 
-func PromptServer(doc openapi3.T) (error, openapi3.Server) {
+func Prompt(doc openapi3.T) error {
+	err, server := promptServer(doc)
+	if err != nil {
+		return err
+	}
+
+	err, path := promptPath(doc)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.Get(server.URL + path.path)
+	if err != nil {
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(body))
+	return nil
+}
+
+func getOptionsAndPaths(doc openapi3.T) ([]string, map[string]Path) {
+	opLen := 0
+	for key := range doc.Paths {
+		if len(key) > opLen {
+			opLen = len(key)
+		}
+	}
+	format := fmt.Sprintf("%%-%ds %%-%ds | %%s", 7, opLen)
+
+	var options []string
+	ops := make(map[string]Path)
+	for key, value := range doc.Paths {
+		for method, operation := range value.Operations() {
+			path := fmt.Sprintf(format, method, key, operation.Summary)
+			options = append(options, path)
+
+			ops[path] = Path{
+				path: key,
+				item: *value,
+			}
+		}
+	}
+	return options, ops
+}
+
+func promptPath(doc openapi3.T) (error, Path) {
+	var input string
+
+	options, ops := getOptionsAndPaths(doc)
+	methodPrompt := &survey.Select{
+		Message: "Select method to call",
+		Options: options,
+	}
+	err := survey.AskOne(methodPrompt, &input, survey.WithValidator(survey.Required))
+	if err != nil {
+		return err, Path{}
+	}
+
+	return nil, ops[input]
+}
+
+func promptServer(doc openapi3.T) (error, openapi3.Server) {
 	// Set the printing format
 	opLen := 0
 	for _, value := range doc.Servers {
@@ -60,70 +126,6 @@ func PromptServer(doc openapi3.T) (error, openapi3.Server) {
 		return err, openapi3.Server{}
 	}
 	return nil, serverMap[server]
-}
-
-func PromptPath(doc openapi3.T) (error, Path) {
-	// Set the printing format
-	opLen := 0
-	for key := range doc.Paths {
-		if len(key) > opLen {
-			opLen = len(key)
-		}
-	}
-	format := fmt.Sprintf("%%-%ds %%-%ds | %%s", 7, opLen)
-
-	var options []string
-	ops := make(map[string]Path)
-	for key, value := range doc.Paths {
-		for method, operation := range value.Operations() {
-			path := fmt.Sprintf(format, method, key, operation.Summary)
-			options = append(options, path)
-
-			ops[path] = Path{
-				path: key,
-				item: *value,
-			}
-		}
-	}
-	methodPrompt := &survey.Select{
-		Message: "Select method to call",
-		Options: options,
-	}
-	var answer string
-	err := survey.AskOne(methodPrompt, &answer, survey.WithValidator(survey.Required))
-	if err != nil {
-		return err, Path{}
-	}
-	return nil, ops[answer]
-}
-
-func Prompt(doc openapi3.T) error {
-	err, server := PromptServer(doc)
-	if err != nil {
-		return err
-	}
-
-	err, path := PromptPath(doc)
-	if err != nil {
-		return err
-	}
-
-	resp, err := http.Get(server.URL + path.path)
-	if err != nil {
-		return err
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(resp.Body)
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(body))
-	return nil
 }
 
 func init() {
