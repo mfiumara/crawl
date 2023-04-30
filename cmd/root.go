@@ -4,9 +4,17 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/getkin/kin-openapi/openapi3"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+)
+
+var (
+	path string
+	doc  openapi3.T
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -22,6 +30,30 @@ to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		specPrompt := &survey.Input{
+			Message: "Point to a filepath of an openAPI spec:",
+			Suggest: func(toComplete string) []string {
+				files, _ := filepath.Glob(toComplete + "*")
+				return files
+			},
+		}
+
+		var err error
+		// Use the cli path variable if provided
+		if path == "" {
+			err = survey.AskOne(specPrompt, &path)
+			if err != nil {
+				println(err.Error())
+				os.Exit(1)
+			}
+		}
+		d, err := Validate(path)
+		if err != nil {
+			os.Exit(1)
+		}
+		doc = *d
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -43,4 +75,7 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	// Available for all subcommands
+	rootCmd.PersistentFlags().StringVar(&path, "path", "", "Path to the spec")
 }

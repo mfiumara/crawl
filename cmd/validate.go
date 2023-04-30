@@ -5,13 +5,10 @@ package cmd
 
 import (
 	"context"
+	"os"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/spf13/cobra"
-)
-
-var (
-	path string
 )
 
 // validateCmd represents the validate command
@@ -20,7 +17,12 @@ var validateCmd = &cobra.Command{
 	Short: "Validate an openAPI spec definition",
 	Long:  `Validates whether an openAPI specification is valid or not. Can give a URL or a local file path as input.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		Validate(path)
+		_, err := Validate(path)
+		if err != nil {
+			println("Could not load spec: ", err.Error())
+			os.Exit(1)
+		}
+		println("✅ Spec valid")
 	},
 }
 
@@ -31,7 +33,6 @@ func init() {
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	validateCmd.Flags().StringVar(&path, "path", "", "Path to the spec")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
@@ -44,19 +45,14 @@ func Validate(path string) (*openapi3.T, error) {
 	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
 	doc, err := loader.LoadFromFile(path)
 	if err != nil {
-		println("Could not load spec from path: ", path)
-		println(err.Error())
 		return nil, err
 	}
 
 	// Validate document
 	err = doc.Validate(ctx)
 	if err != nil {
-		println("❌ Spec invalid: ")
-		println(err.Error())
 		return nil, err
 	}
 
-	println("✅ Spec valid")
 	return doc, nil
 }
