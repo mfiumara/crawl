@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,4 +27,21 @@ func TestRootCmd(t *testing.T) {
 	assert.Contains(t, buf.String(), rootCmd.Long)
 
 	Execute()
+}
+
+func TestRootPreRun(t *testing.T) {
+	// Hack stdin to use prompt_server.txt as input
+	input, err := os.Open("testdata/root.txt")
+	assert.NoError(t, err)
+	oldStdin := os.Stdin
+	defer func() {
+		os.Stdin = oldStdin
+		err := input.Close()
+		if err != nil {
+			return
+		}
+	}()
+	os.Stdin = input
+
+	rootPreRun(nil, nil)
 }
