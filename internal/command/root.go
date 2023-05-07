@@ -1,7 +1,9 @@
 package command
 
 import (
+	"bufio"
 	"crawl/internal/spec"
+	"fmt"
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/getkin/kin-openapi/openapi3"
 	"os"
@@ -25,6 +27,7 @@ and perform requests based on a given openAPI specification.
 Running the CLI in interactive mode will always first validate the spec, then proceed as an interactive prompt.
 `,
 	PersistentPreRun: rootPreRun,
+	Run:              rootRun,
 }
 
 func rootPreRun(*cobra.Command, []string) {
@@ -50,6 +53,22 @@ func rootPreRun(*cobra.Command, []string) {
 		os.Exit(1)
 	}
 	doc = *d
+}
+
+func rootRun(cmd *cobra.Command, args []string) {
+	// Do some initial setup
+	fmt.Println("Initial command executed")
+	for {
+		// Read user input from stdin
+		fmt.Print("crawl> ")
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		input := scanner.Text()
+
+		// Call the root command with the user input as arguments
+		cmd.SetArgs([]string{input})
+		cmd.Execute()
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
