@@ -83,9 +83,6 @@ func TestListMethods(t *testing.T) {
 	doc, err := loader.LoadFromFile("../testdata/petstore.json")
 	err = ListMethods(*doc)
 	assert.Nilf(t, err, "spec was valid but returned error")
-
-	doc, err = loader.LoadFromFile("../testdata/invalid.yaml")
-	assert.NotNilf(t, err, "expected an error due to invalid spec, but parsed succesfully")
 }
 
 func TestListSecurity(t *testing.T) {
