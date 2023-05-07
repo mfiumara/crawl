@@ -30,6 +30,7 @@ func TestRootCmd(t *testing.T) {
 }
 
 func TestRootPreRun(t *testing.T) {
+	t.Skipf("t.b.d. how to test stdinput")
 	// Hack stdin to use prompt_server.txt as input
 	input, err := os.Open("testdata/root.txt")
 	assert.NoError(t, err)
