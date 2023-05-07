@@ -1,10 +1,9 @@
-package cmd
+package spec
 
 import (
-	"github.com/Netflix/go-expect"
+	"context"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 )
 
@@ -26,7 +25,7 @@ func TestGetOptionsAndServers(t *testing.T) {
 		"Production Server | https://api.example.com": {URL: "https://api.example.com", Description: "Production Server"},
 	}
 
-	options, serverMap := getOptionsAndServers(doc)
+	options, serverMap := GetOptionsAndServers(doc)
 
 	assert.Equal(t, expectedOptions, options)
 	assert.Equal(t, expectedServerMap, serverMap)
@@ -52,66 +51,46 @@ func TestGetOptionsAndPaths(t *testing.T) {
 	}
 
 	expectedPathMap := map[string]Path{
-		"GET     /foo | Get Foo":    {path: "/foo", item: *path1},
-		"POST    /bar | Create Foo": {path: "/bar", item: *path2},
+		"GET     /foo | Get Foo":    {Path: "/foo", Item: *path1},
+		"POST    /bar | Create Foo": {Path: "/bar", Item: *path2},
 	}
 
-	options, pathMap := getOptionsAndPaths(doc)
+	options, pathMap := GetOptionsAndPaths(doc)
 
 	assert.Equal(t, expectedOptions, options)
 	assert.Equal(t, expectedPathMap, pathMap)
 }
 
-func TestPromptExpect(t *testing.T) {
-	c, _ := expect.NewConsole()
-	defer c.Close()
-	donec := make(chan struct{})
-	go func() {
-		defer close(donec)
-		c.SendLine("https")
-	}()
-	<-donec
+func TestValidate(t *testing.T) {
 
+	_, err := Validate("../testdata/petstore.json")
+
+	assert.Nilf(t, err, "spec was valid but returned error")
+
+	_, err = Validate("../testdata/petstore.yaml")
+	assert.Nilf(t, err, "spec was valid but returned error")
+
+	_, err = Validate("../testdata/invalid.yaml")
+	assert.NotNilf(t, err, "expected an error due to invalid spec, but parsed succesfully")
 }
 
-func TestPromptServer(t *testing.T) {
-	t.Skipf("t.b.d. how to test stdinput")
-	doc, err := Validate("testdata/petstore.json")
-	assert.NoError(t, err)
+func TestListMethods(t *testing.T) {
+	ctx := context.Background()
+	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
 
-	c, _ := expect.NewConsole()
-	defer c.Close()
-	donec := make(chan struct{})
-	go func() {
-		defer close(donec)
-		c.SendLine("https")
-	}()
-	<-donec
+	doc, err := loader.LoadFromFile("../testdata/petstore.json")
+	err = ListMethods(*doc)
+	assert.Nilf(t, err, "spec was valid but returned error")
 
-	err, server := promptServer(*doc)
-	assert.NoError(t, err)
-	assert.Equal(t, server.URL, "https://petstore.swagger.io/v2")
+	doc, err = loader.LoadFromFile("../testdata/invalid.yaml")
+	assert.NotNilf(t, err, "expected an error due to invalid spec, but parsed succesfully")
 }
 
-func TestPromptPath(t *testing.T) {
-	t.Skipf("t.b.d. how to test stdinput")
-	doc, err := Validate("testdata/petstore.json")
-	assert.NoError(t, err)
+func TestListSecurity(t *testing.T) {
+	ctx := context.Background()
+	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
 
-	// Hack stdin to use prompt_server.txt as input
-	input, err := os.Open("testdata/prompt_path.txt")
-	assert.NoError(t, err)
-	oldStdin := os.Stdin
-	defer func() {
-		os.Stdin = oldStdin
-		err := input.Close()
-		if err != nil {
-			return
-		}
-	}()
-	os.Stdin = input
-
-	err, path := promptPath(*doc)
-	assert.NoError(t, err)
-	assert.Equal(t, path.path, "/pets/")
+	doc, err := loader.LoadFromFile("../testdata/petstore.json")
+	err = ListSecurity(*doc)
+	assert.Nilf(t, err, "spec was valid but returned error")
 }

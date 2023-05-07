@@ -1,6 +1,7 @@
-package cmd
+package command
 
 import (
+	"crawl/internal/spec"
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/getkin/kin-openapi/openapi3"
 	"os"
@@ -44,7 +45,7 @@ func rootPreRun(*cobra.Command, []string) {
 			os.Exit(1)
 		}
 	}
-	d, err := Validate(path)
+	d, err := spec.Validate(path)
 	if err != nil {
 		os.Exit(1)
 	}

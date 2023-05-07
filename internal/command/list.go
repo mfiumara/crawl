@@ -1,8 +1,8 @@
-package cmd
+package command
 
 import (
 	"context"
-	"fmt"
+	"crawl/internal/spec"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/spf13/cobra"
 	"os"
@@ -27,7 +27,7 @@ to quickly create a Cobra application.`,
 			println(err.Error())
 			os.Exit(1)
 		}
-		err = ListMethods(*doc)
+		err = spec.ListMethods(*doc)
 		if err != nil {
 			println("Could not load spec from path: ", path)
 			println(err.Error())
@@ -38,30 +38,4 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(listCmd)
-}
-
-func ListMethods(doc openapi3.T) error {
-
-	// Set the printing format
-	opLen := 0
-	for key := range doc.Paths {
-		if len(key) > opLen {
-			opLen = len(key)
-		}
-	}
-	format := fmt.Sprintf("%%-%ds %%-%ds | %%s\n", 7, opLen)
-
-	for key, value := range doc.Paths {
-		for method, operation := range value.Operations() {
-			fmt.Printf(format, method, key, operation.Summary)
-		}
-	}
-	return nil
-}
-
-func ListSecurity(doc openapi3.T) error {
-	for key, value := range doc.Components.SecuritySchemes {
-		fmt.Printf("name: %s | type: %s\n", key, value.Value.Type)
-	}
-	return nil
 }

@@ -1,4 +1,4 @@
-package cmd
+package command
 
 import (
 	"bytes"
@@ -30,9 +30,9 @@ func TestRootCmd(t *testing.T) {
 }
 
 func TestRootPreRun(t *testing.T) {
-	t.Skipf("t.b.d. how to test stdinput")
+	t.Skipf("pending workable stdin mock")
 	// Hack stdin to use prompt_server.txt as input
-	input, err := os.Open("testdata/root.txt")
+	input, err := os.Open("../testdata/root.txt")
 	assert.NoError(t, err)
 	oldStdin := os.Stdin
 	defer func() {
