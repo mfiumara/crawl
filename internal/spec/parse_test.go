@@ -61,26 +61,26 @@ func TestGetOptionsAndPaths(t *testing.T) {
 	assert.Equal(t, expectedPathMap, pathMap)
 }
 
-func TestValidate(t *testing.T) {
+func TestIsValid(t *testing.T) {
+	ctx := context.Background()
+	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
+	validDoc, err := loader.LoadFromFile("../testdata/petstore.json")
+	invalidDoc, _ := loader.LoadFromFile("../testdata/invalid.yaml")
 
-	_, err := Validate("../testdata/petstore.json")
+	valid, err := IsValid(*validDoc)
 	assert.Nilf(t, err, "spec was valid but returned error")
+	assert.True(t, valid)
 
-	_, err = Validate("../testdata/petstore.yaml")
-	assert.Nilf(t, err, "spec was valid but returned error")
-
-	_, err = Validate("nonexistent.yaml")
-	assert.NotNilf(t, err, "expected an error due to invalid path, but parsed succesfully")
-
-	_, err = Validate("../testdata/invalid.yaml")
+	invalid, err := IsValid(*invalidDoc)
 	assert.NotNilf(t, err, "expected an error due to invalid spec, but parsed succesfully")
+	assert.False(t, invalid)
 }
 
 func TestListMethods(t *testing.T) {
 	ctx := context.Background()
 	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
-
 	doc, err := loader.LoadFromFile("../testdata/petstore.json")
+
 	err = ListMethods(*doc)
 	assert.Nilf(t, err, "spec was valid but returned error")
 }
@@ -88,8 +88,8 @@ func TestListMethods(t *testing.T) {
 func TestListSecurity(t *testing.T) {
 	ctx := context.Background()
 	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
-
 	doc, err := loader.LoadFromFile("../testdata/petstore.json")
+
 	err = ListSecurity(*doc)
 	assert.Nilf(t, err, "spec was valid but returned error")
 }

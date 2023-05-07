@@ -2,6 +2,7 @@ package command
 
 import (
 	"bufio"
+	"context"
 	"crawl/internal/spec"
 	"fmt"
 	"github.com/AlecAivazis/survey/v2"
@@ -48,16 +49,26 @@ func rootPreRun(*cobra.Command, []string) {
 			os.Exit(1)
 		}
 	}
-	d, err := spec.Validate(path)
+	ctx := context.Background()
+	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
+	d, err := loader.LoadFromFile(path)
 	if err != nil {
+		println("Could not load file from path ", path)
+		println(err.Error())
+		os.Exit(1)
+	}
+
+	valid, err := spec.IsValid(*d)
+	if !valid {
+		println("Invalid spec")
+		println(err.Error())
 		os.Exit(1)
 	}
 	doc = *d
 }
 
 func rootRun(cmd *cobra.Command, args []string) {
-	// Do some initial setup
-	fmt.Println("Initial command executed")
+	println("✅ Spec loaded: ", doc.Info.Title)
 	for {
 		// Read user input from stdin
 		fmt.Print("crawl> ")

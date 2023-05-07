@@ -1,9 +1,7 @@
 package command
 
 import (
-	"context"
 	"crawl/internal/spec"
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -19,17 +17,9 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
-		doc, err := loader.LoadFromFile(path)
+		err := spec.ListMethods(doc)
 		if err != nil {
-			println("Could not load spec from path: ", path)
-			println(err.Error())
-			os.Exit(1)
-		}
-		err = spec.ListMethods(*doc)
-		if err != nil {
-			println("Could not load spec from path: ", path)
+			println("Could not list methods in spec:")
 			println(err.Error())
 			os.Exit(1)
 		}

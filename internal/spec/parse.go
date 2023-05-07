@@ -57,21 +57,15 @@ func GetOptionsAndServers(doc openapi3.T) ([]string, map[string]openapi3.Server)
 }
 
 // Validate Validates an openapi spec
-func Validate(path string) (*openapi3.T, error) {
+func IsValid(doc openapi3.T) (bool, error) {
 	ctx := context.Background()
-	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
-	doc, err := loader.LoadFromFile(path)
-	if err != nil {
-		return nil, err
-	}
 
 	// Validate document
-	err = doc.Validate(ctx)
+	err := doc.Validate(ctx)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-
-	return doc, nil
+	return true, nil
 }
 
 func ListMethods(doc openapi3.T) error {
