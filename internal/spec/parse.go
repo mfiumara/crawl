@@ -3,7 +3,9 @@ package spec
 import (
 	"context"
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/getkin/kin-openapi/openapi3"
+	"net/http"
 )
 
 type Path struct {
@@ -76,14 +78,42 @@ func ListMethods(doc openapi3.T) error {
 			opLen = len(key)
 		}
 	}
-	format := fmt.Sprintf("%%-%ds %%-%ds | %%s\n", 7, opLen)
+	format := fmt.Sprintf("%%-%ds %%-%ds | %%s\n", 12, opLen)
 
 	for key, value := range doc.Paths {
 		for method, operation := range value.Operations() {
-			fmt.Printf(format, method, key, operation.Summary)
+			fmt.Printf(format, methodColorized(method), key, operation.Summary)
 		}
 	}
 	return nil
+}
+
+func methodColorized(method string) string {
+	red := color.New(color.FgRed).SprintFunc()
+	green := color.New(color.FgGreen).SprintFunc()
+	hiGreen := color.New(color.FgHiGreen).SprintFunc()
+	blue := color.New(color.FgBlue).SprintFunc()
+	yellow := color.New(color.FgYellow).SprintFunc()
+	switch method {
+	case http.MethodGet:
+		return blue(method)
+	case http.MethodPut:
+		return yellow(method)
+	case http.MethodPost:
+		return green(method)
+	case http.MethodPatch:
+		return hiGreen(method)
+	case http.MethodDelete:
+		return red(method)
+
+	case http.MethodConnect:
+	case http.MethodHead:
+	case http.MethodOptions:
+	case http.MethodTrace:
+	default:
+		return method
+	}
+	return method
 }
 
 func ListSecurity(doc openapi3.T) error {

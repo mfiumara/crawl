@@ -13,6 +13,7 @@ require (
 require (
 	github.com/creack/pty v1.1.17 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/fatih/color v1.15.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
